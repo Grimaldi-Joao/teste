@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/motor_ia}
+    username: ${DB_USERNAME:motor}
+    password: ${DB_PASSWORD:motor}
+    driver-class-name: org.postgresql.Driver
+  h2:
+    console:
+      enabled: false

@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:motor-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+engine:
+  scheduler-enabled: false
+  burst-window: 20ms
+  scheduler-delay: 10ms
+  llm:
+    provider: template
+    model: test-model
+
+logging:
+  level:
+    root: WARN
+    org.hibernate.SQL: OFF
+    org.springframework: WARN

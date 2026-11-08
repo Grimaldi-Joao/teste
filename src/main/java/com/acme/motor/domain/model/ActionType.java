@@ -1,0 +1,13 @@
+package com.acme.motor.domain.model;
+
+public enum ActionType {
+    ADICIONAR_TAG,
+    MOVER_ESTAGIO,
+    ATUALIZAR_FICHA,
+    NOTIFICAR_EQUIPE,
+    TRANSFERIR_HUMANO,
+    CONSULTAR_AGENDA,
+    MARCAR_AGENDA,
+    INTERVENCAO_ASSUMIR,
+    INTERVENCAO_RELIGAR
+}

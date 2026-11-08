@@ -1,0 +1,23 @@
+services:
+  motor-ia:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      BURST_WINDOW: ${BURST_WINDOW:-8s}
+      LLM_PROVIDER: ${LLM_PROVIDER:-template}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-template-v1}
+      LLM_INPUT_COST_PER_MILLION: ${LLM_INPUT_COST_PER_MILLION:-0}
+      LLM_OUTPUT_COST_PER_MILLION: ${LLM_OUTPUT_COST_PER_MILLION:-0}
+    volumes:
+      - motor-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  motor-data:

@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: motor-ia-atendimento
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/motor-ia;MODE=PostgreSQL;AUTO_SERVER=TRUE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    default-property-inclusion: non_null
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+engine:
+  burst-window: ${BURST_WINDOW:8s}
+  scheduler-delay: ${SCHEDULER_DELAY:500ms}
+  scheduler-enabled: ${SCHEDULER_ENABLED:true}
+  available-slots:
+    - quinta de manhã
+    - quinta às 14h
+    - sexta às 10h
+  llm:
+    provider: ${LLM_PROVIDER:template}
+    base-url: ${LLM_BASE_URL:}
+    api-key: ${LLM_API_KEY:}
+    model: ${LLM_MODEL:template-v1}
+    input-cost-per-million: ${LLM_INPUT_COST_PER_MILLION:0}
+    output-cost-per-million: ${LLM_OUTPUT_COST_PER_MILLION:0}
+
+server:
+  port: ${PORT:8080}

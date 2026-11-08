@@ -1,0 +1,10 @@
+target/
+.m2/
+data/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+evaluation-report.json
+evaluation-report.md
