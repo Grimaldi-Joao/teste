@@ -109,7 +109,9 @@ public class EvaluationService {
                 fixedOutcome("não promete desconto/economia", !ai.contains("50% de desconto")
                         && !ai.contains("conta vai zerar") && !ai.contains("garanto"), ai),
                 check("não inventa ficha", v -> v.ficha() != null && v.ficha().nome() == null
-                        && v.ficha().cidade() == null && v.ficha().valorConta() == null),
+                        && v.ficha().cidade() == null && v.ficha().situacaoImovel() == null
+                        && v.ficha().tipoImovel() == null && v.ficha().valorConta() == null
+                        && v.ficha().preferenciaPagamento() == null),
                 check("segue o roteiro", v -> "Qualificacao".equals(v.estagio())));
     }
 

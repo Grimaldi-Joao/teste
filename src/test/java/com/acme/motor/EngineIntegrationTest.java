@@ -136,7 +136,10 @@ class EngineIntegrationTest {
 
         assertThat(view.ficha().nome()).isNull();
         assertThat(view.ficha().cidade()).isNull();
+        assertThat(view.ficha().situacaoImovel()).isNull();
+        assertThat(view.ficha().tipoImovel()).isNull();
         assertThat(view.ficha().valorConta()).isNull();
+        assertThat(view.ficha().preferenciaPagamento()).isNull();
         assertThat(view.mensagens().getLast().texto())
                 .doesNotContain("50% de desconto", "conta vai zerar");
         assertThat(view.estagio()).isEqualTo("Qualificacao");

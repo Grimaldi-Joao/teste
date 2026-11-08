@@ -27,6 +27,10 @@ public class LeadFactExtractor {
             "(?iu)\\b(?:me chamo|meu nome (?:e|é)|sou o|sou a)\\s+([\\p{L}]+(?:\\s+[\\p{L}]+){1,3})");
     private static final Pattern BILL = Pattern.compile(
             "(?iu)(?:conta[^\\d]{0,30}|r\\$\\s*|uns?\\s+)(\\d{2,5})(?:[,.](\\d{1,2}))?");
+    private static final Pattern OWNED_PROPERTY = Pattern.compile(
+            "\\b(?:casa propria|imovel proprio|imovel (?:e|eh) proprio|"
+                    + "(?:casa|imovel) (?:e|eh) (?:minha|meu)|"
+                    + "(?:e|eh) minha,? quitada|(?:e|eh) meu,? quitado)\\b");
 
     public ExtractedFacts extract(List<Message> messages, TenantConfig tenant) {
         Map<String, Object> fields = new LinkedHashMap<>();
@@ -38,8 +42,7 @@ public class LeadFactExtractor {
 
         if (containsAny(normalized, "alugado", "alugada", "aluguel", "moro de aluguel")) {
             fields.put("situacao_imovel", "ALUGADO");
-        } else if (containsAny(normalized, "casa propria", "imovel proprio", "imovel e proprio",
-                "e minha", "eh minha", "quitada", "quitado")) {
+        } else if (OWNED_PROPERTY.matcher(normalized).find()) {
             fields.put("situacao_imovel", "PROPRIO");
         }
 

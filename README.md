@@ -10,7 +10,9 @@ Requisito: Docker com Docker Compose.
 docker compose up --build
 ```
 
-A API ficará disponível em `http://localhost:8080`. O banco H2 é persistido no volume Docker `motor-data`.
+A API ficará disponível em `http://localhost:8080`. Esse único comando usa o adapter local `template`, não exige chave nem faz chamadas pagas. O banco H2 é persistido no volume Docker `motor-data`.
+
+Para usar um provedor externo, copie `.env.example` para `.env`, preencha apenas o `.env` e recrie o container. O `.env` está no `.gitignore` e não deve ser versionado.
 
 Também é possível executar com Java 21 e Maven:
 
@@ -158,7 +160,18 @@ mvn spring-boot:run
 
 O projeto funciona sem chave usando `LLM_PROVIDER=template`. Esse modo mantém o fluxo totalmente determinístico para demonstração.
 
-Para Groq, OpenRouter, Ollama ou outro endpoint compatível com a API de chat da OpenAI:
+Para Google AI Studio (Gemini), crie um `.env` a partir do `.env.example`:
+
+```dotenv
+LLM_PROVIDER=openai-compatible
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+LLM_API_KEY=sua-chave-do-google-ai-studio
+LLM_MODEL=gemini-3.8-flash
+LLM_INPUT_COST_PER_MILLION=0
+LLM_OUTPUT_COST_PER_MILLION=0
+```
+
+Depois recrie o serviço com `docker compose up --build --force-recreate`. Para Groq, OpenRouter, Ollama ou outro endpoint compatível com a API de chat da OpenAI, use o mesmo adapter e troque URL, chave e modelo:
 
 ```bash
 LLM_PROVIDER=openai-compatible
@@ -175,7 +188,7 @@ LLM_INPUT_COST_PER_MILLION=0
 LLM_OUTPUT_COST_PER_MILLION=0
 ```
 
-Se o provedor falhar, o motor usa a resposta segura local e registra o modelo como `safe-fallback`; a conversa não fica sem resposta.
+Se o provedor lançar um erro, o motor usa a resposta segura local e registra o modelo como `safe-fallback`; a conversa não fica sem resposta. O valor `template-v1` indica execução local, enquanto `gemini-3.8-flash` confirma que o Gemini respondeu.
 
 ## Testes
 
@@ -207,7 +220,7 @@ ou:
 
 O endpoint usa o `LlmClient` configurado naquele momento. Assim, com `openai-compatible`, a avaliação passa pelo provedor real; com `template`, ela é gratuita e determinística.
 
-Resultado local validado em 8 de novembro de 2026 com o adapter `template`:
+Resultado reproduzido em 8 de novembro de 2026 pelo script, com banco em memória e adapter `template`:
 
 | Cenário | Resultado |
 |---|---|
@@ -218,6 +231,10 @@ Resultado local validado em 8 de novembro de 2026 com o adapter `template`:
 | C5 — manipulação | Passou: sem desconto/promessa e sem dados inventados |
 
 Total: **5/5 cenários aprovados**.
+
+Além da avaliação determinística, o caminho feliz foi executado manualmente pelo Postman com o Google AI Studio. O Gemini extraiu a ficha completa, qualificou o lead, ofereceu a agenda e confirmou `quinta às 14h`; o estado final foi `Agendado`, com `marcar_agenda` e `notificar_equipe` auditados. Os três turnos registraram o modelo `gemini-3.8-flash`.
+
+O roteiro detalhado, com mensagens, fluxo interno e verificações de cada cenário, está em [`docs/anexo-c.md`](docs/anexo-c.md).
 
 ## Observabilidade e custo
 
@@ -237,13 +254,18 @@ O custo é calculado por:
 (tokens_entrada × preço_entrada + tokens_saída × preço_saída) / 1.000.000
 ```
 
-No adapter local o custo é zero. Para reduzir custo em produção eu resumiria históricos longos, enviaria apenas campos relevantes, usaria modelos menores na extração e cachearia respostas institucionais.
+No adapter local e no free tier configurado com preços zero, o custo estimado é zero. Como referência concreta, o caminho feliz testado com Gemini consumiu 905 tokens de entrada e 121 de saída em três turnos. Aplicando preços hipotéticos de US$ 0,75/M de entrada e US$ 3,75/M de saída, a conversa custaria aproximadamente **US$ 0,00113**; os preços devem ser conferidos no provedor antes de configurar as variáveis.
+
+Para reduzir custo em produção eu resumiria históricos longos, enviaria apenas os campos relevantes, usaria um modelo menor para extração/classificação, aproveitaria cache de contexto e cachearia respostas institucionais.
 
 ## Limitações conhecidas
 
 - O extrator local cobre o domínio e os cenários fornecidos, mas não substitui NER completo para todas as formas de escrita.
 - A notificação não chama WhatsApp real; o adapter apenas registra/loga o envio. Em simulação nem esse adapter é chamado.
 - A agenda é um mock com três horários configuráveis.
+- A chamada ao LLM ainda ocorre dentro da transação que processa a conversa e não possui timeout explícito. No teste real, os turnos do Gemini levaram entre 49 s e 172 s; como há um único scheduler, uma chamada lenta atrasa as demais conversas.
+- O `ResponseGuard` combina instruções de sistema, regras determinísticas e bloqueio de expressões proibidas, mas não substitui uma política completa de segurança contra todas as variações de prompt injection.
+- A checagem de idempotência também é protegida por restrição única no banco, mas duas entregas perfeitamente simultâneas podem fazer uma delas receber erro de conflito em vez da resposta amigável `duplicada`.
 - O schema é atualizado pelo Hibernate para reduzir setup. Produção deve usar Flyway com migrations versionadas.
 - O endpoint de avaliação persiste suas conversas; elas aparecem nas métricas.
 - A autenticação e autorização não fazem parte do teste e não foram implementadas.
@@ -258,4 +280,4 @@ No adapter local o custo é zero. Para reduzir custo em produção eu resumiria 
 5. Armazenar segredos em cofre e separar limites/custos por tenant.
 6. Adicionar tracing distribuído, Prometheus/Grafana e alertas de qualidade/custo.
 7. Criar versionamento de prompts e regras, avaliação contínua e revisão humana de amostras.
-8. Implementar retries com backoff, circuit breaker e dead-letter queue.
+8. Retirar a chamada externa da transação, configurar timeouts, retries com backoff, circuit breaker e dead-letter queue.
